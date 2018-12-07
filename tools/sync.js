@@ -11,6 +11,7 @@ var _ = require('lodash');
 
 var async = require('async');
 var Web3 = require('web3');
+var rlp = require('rlp');
 
 var mongoose        = require( 'mongoose' );
 var Block           = mongoose.model( 'Block' );
@@ -181,6 +182,9 @@ var writeTransactionsToDB = function(config, blockData, flush) {
       data[tx.from] = { address: tx.from, blockNumber: tx.blockNumber, type: 0 };
       if (tx.to) {
         data[tx.to] = { address: tx.to, blockNumber: tx.blockNumber, type: 0 };
+      } else {
+        tx.to = '0x'+web3.sha3(rlp.encode([tx.from,tx.nonce]).toString('hex'),{encoding:'hex'}).substr(26);
+        tx.isC = true;
       }
     });
 

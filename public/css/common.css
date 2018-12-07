@@ -1,0 +1,26 @@
+nav{
+  background: #375A7F;
+}
+body{
+  background: #222;
+  color: #FFF;
+}
+footer{
+  background: #1a1a1a;
+  height: 4em;
+  line-height: 4em;
+}
+.navbar-header a{
+  color: #FFF;
+}
+.navbar-form{
+  border: none;
+}
+.table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
+  background-color: #111;
+}
+@media (min-width: 768px) {
+    .navbar-form .input-group>.form-control {
+        min-width: 30em !important;
+    }
+}

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="https://cdn.bootcss.com/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/common.css">
+  <title>HadesCoin(HDC) 区块链 浏览器</title>
+<style>
+.address-tag {
+  width: 10em;
+  display: inline-block;
+    vertical-align: bottom;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+h1.pull-left{
+  text-align: center;
+  font-size: 16px;
+  color: #FFF;
+}
+.hidden-su-custom {
+    font-size: 14px !important;
+    color: #FFF !important;
+}
+.bk{
+      word-break: break-word;
+}
+textarea{
+width: 100%;
+font-size: small; 
+font-family: Monospace; 
+padding: 8px; 
+background-color: #222;
+}
+.detail .col-sm-9 {
+  margin-bottom: .8em;
+}
+.detail .col-sm-3{
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <nav class="navbar">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="/">HadesCoin 区块浏览器</a>
+      </div>
+      <form class="navbar-form navbar-right">
+        <div class="input-group">
+          <input type="text" class="form-control" placeholder="请输入地址 / 交易哈希" v-model="kw">
+          <span class="input-group-btn">
+            <button class="btn btn-default" type="button" v-on:click="sear()">搜索</button>
+          </span>
+        </div>
+      </form>
+    </div>
+  </nav>
+ 
+  <div class="container-fluid">
+    <div class="col-sm-12 clearfix">  
+      <h1 class="etitle pull-left">
+      哈希
+      <span class="lead-modify hidden-su-custom bk" style="color: #999999" id="address"><span id="mainaddress" data-placement="top">{{tx.hash}}</span>
+      </h1>
+    </div>
+    <div class="row detail">
+      <div class="col-sm-12" style="background: #333;line-height: 2em;font-size: 18px;margin-bottom: .5em;">交易信息</h2></div>
+      <div class="col-sm-3">哈希值</div>
+      <div class="col-sm-9 bk">{{tx.hash}}</div>
+      <div class="col-sm-3">所在区块</div>
+      <div class="col-sm-9">{{tx.blockNumber}}</div>
+      <div class="col-sm-3">时间</div>
+      <div class="col-sm-9">{{new Date(tx.timestamp*1000).toLocaleString()}}</div>
+      <div class="col-sm-3">发送方</div>
+      <div class="col-sm-9 bk">{{tx.from}}</div>
+      <div class="col-sm-3">接收方</div>
+      <div class="col-sm-9 bk">{{tx.to}}</div>
+      <div class="col-sm-3">金额</div>
+      <div class="col-sm-9">{{tx.value}} HDC</div>
+      <div class="col-sm-3">消耗Gas</div>
+      <div class="col-sm-9">{{tx.gas}}</div>
+      <div class="col-sm-3">Gas价格</div>
+      <div class="col-sm-9">{{tx.gasPrice/1e9}} Gwei</div>
+      <div class="col-sm-3">编号</div>
+      <div class="col-sm-9">{{tx.nonce}}</div>
+      <div class="col-sm-3">备注</div>
+      <div class="col-sm-9">
+        <textarea rows="4" readonly>{{tx.input}}</textarea>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <p class="text-center">HadesChain.org &copy;2017-2018</p>
+  </footer>
+</div>
+</body>
+<script src="https://cdn.bootcss.com/vue/2.5.17/vue.min.js"></script>
+<script src="https://cdn.bootcss.com/vue-resource/1.5.1/vue-resource.min.js"></script>
+<script>
+new Vue({
+  el : '#app',
+  data: {
+    kw : '',
+    href : window.location.href,
+    tx : {},
+    stx : '',
+  },
+
+  created: function () {
+    if(this.init()!==true) {
+      return;
+    }
+
+    this.getTx();
+  },
+
+  methods : {
+    init : function() {
+      var stx = /0x\w{64}/.exec(this.href);
+      if(stx!==null) {
+        this.stx = stx[0];
+        return this.stx.length === 66;
+      }
+    },
+
+    getTx : function() {
+      var url = '/tx';
+      var data = {"tx":this.stx};
+      this.$http.post(url,JSON.stringify(data))
+      .then(
+        (r)=>{
+          this.tx = Object.assign({},this.tx , r.body);
+        },
+        (e)=>{}
+      );  
+    },
+
+    sear : function() {
+      if(this.kw.length === 42) {
+        window.location.href='/addr/'+this.kw;
+      } else if(this.kw.length === 66) {
+        window.location.href='/tx/'+this.kw;
+      } else {
+        this.kw = '';
+      }
+    },
+  }
+})
+</script>
+</html>

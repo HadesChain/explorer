@@ -12,6 +12,36 @@ function filterTX(txs, value) {
   })
 }
 
+function filterTx(tx) {
+  tx.gasPrice = BigNumber.prototype.toString.call(tx.gasPrice);
+  return tx;
+}
+
+function filterTrans(txs, value) {
+  return txs.map(function(tx){
+    tx.gasPrice = BigNumber.prototype.toString.call(tx.gasPrice);
+    tx.id = tx.hash;
+    tx._id = tx.hash;
+    tx.contract = null;
+    tx.operations = [];
+    tx.value = etherUnits.toWei(tx.value , 'ether');
+    tx.timeStamp = tx.timestamp.toString();
+    tx.coin = 99;
+    tx.gasUsed = "21000";
+    tx.gas = tx.gas.toString();
+    tx.error = "";
+    delete tx.timestamp;
+    delete tx.blockHash;
+    delete tx.input;
+    delete tx.hash;
+    delete tx.s;
+    delete tx.r;
+    delete tx.v;
+    delete tx.transactionIndex;
+    return tx;
+  })
+}
+
 function filterTrace(txs, value) {
   return txs.map(function(tx){
     var t = tx;
@@ -120,7 +150,9 @@ var hex2ascii = function (hexIn) {
 module.exports = {
   filterBlock: filterBlock,
   filterBlocks: filterBlocks,
-  filterTX: filterTX,
+  //filterTX: filterTX,
+  filterTx: filterTx,
+  filterTrans: filterTrans,
   filterTrace: filterTrace,
   datatableTX: datatableTX,
   internalTX: internalTX

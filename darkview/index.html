@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="https://cdn.bootcss.com/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/common.css">
+  <title>HadesCoin(HDC) 区块链 浏览器</title>
+<style>
+.truncate-txhash,.todo-tasklist-controls{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.item {
+  padding: .4em 0;
+
+background: #000000;
+background: -webkit-linear-gradient(to left, #434343, #000000);
+background: linear-gradient(to left, #434343, #000000);
+border-radius: .5em;
+color: #FFF;
+box-shadow: 0.5em 0.5em rgba(0,0,0,0.75);
+margin-bottom: 1em;
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <nav class="navbar">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="/">HadesCoin 区块浏览器</a>
+      </div>
+
+
+      <form class="navbar-form navbar-right">
+        <div class="input-group">
+          <input type="text" class="form-control" placeholder="请输入地址 / 交易哈希" v-model="kw">
+          <span class="input-group-btn">
+            <button class="btn btn-default" type="button" v-on:click="sear()">搜索</button>
+          </span>
+        </div>
+      </form>
+    </div>
+  </nav>
+  <div class="container-fluid">
+    <div class="col-row">
+        <div class="item clearfix" v-for="t in trans">
+            <div class="item-head">
+                <div class="truncate-txhash pull-left col-xs-8">
+                    TX <a :href="'/tx/'+t.hash" class="primary-link">{{t.hash}}</a>
+                </div>
+                <div class="item-date pull-right col-xs-4">{{new Date(t.timestamp*1000).toLocaleString()}}</div>
+            </div>
+            <div class="item-body">
+              <div class="todo-tasklist-controls pull-left col-xs-8"> 
+                <span>From <a :href="'/addr/'+t.from">{{t.from}}</a></span> <br>
+                <span>To <a :href="'/addr/'+t.to">{{t.to}}</a></span> 
+              </div> 
+              <div class="todo-tasklist-item-text pull-right col-xs-4">{{t.value}} HDC</div>
+            </div>
+        </div>
+    </div>
+  </div>  
+  <footer>
+    <p class="text-center">HadesChain.org &copy;2017-2018</p>
+  </footer>
+</div>
+</body>
+<script src="https://cdn.bootcss.com/vue/2.5.17/vue.min.js"></script>
+<script src="https://cdn.bootcss.com/vue-resource/1.5.1/vue-resource.min.js"></script>
+<script>
+new Vue({
+  el : '#app',
+  data: {
+    trans : [],
+    kw : '',
+  },
+  created: function () {
+    this.init();
+  },
+
+  methods : {
+    init : function() {
+      this.$http.post('/data','{"action":"latest_txs"}')
+      .then(
+        (r)=>{
+          while(r.body.txs.length) {
+            this.trans.push(r.body.txs.shift());
+          }
+        },
+        (e)=>{}
+      );
+    },
+
+    sear : function() {
+      if(this.kw.length === 42) {
+        window.location.href='/addr/'+this.kw;
+      } else if(this.kw.length === 66) {
+        window.location.href='/tx/'+this.kw;
+      } else {
+        this.kw = '';
+      }
+    }
+
+  }
+})
+</script>
+</html>

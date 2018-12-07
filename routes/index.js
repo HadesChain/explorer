@@ -5,6 +5,7 @@ var Transaction = mongoose.model( 'Transaction' );
 var filters = require('./filters');
 
 var async = require('async');
+var https = require('https');
 
 module.exports = function(app){
   var web3relay = require('./web3relay');
@@ -23,6 +24,9 @@ module.exports = function(app){
     { "tx": "0x1234blah" }
     { "block": "1234" }
   */
+  // api for trust wallet
+  app.get('/transactions', getTrans);
+
   app.post('/richlist', richList);
   app.post('/addr', getAddr);
   app.post('/addr_count', getAddrCounter);
@@ -37,8 +41,100 @@ module.exports = function(app){
 
   app.post('/fiat', fiat);
   app.post('/stats', stats);
+
+  app.post('/tokenPrices',price);
+
+  // todo
+  app.post('/tokens',(req,res)=>{
+    res.send('{"docs":[]}');
+    res.end();
+    
+  });
+  app.post('/prices',(req,res)=>{
+    res.send('{"status":true,"docs":[{"price":"0.0312211978","percent_change_24h":"-9.74","contract":"0x000000000000000000000000000000000000003c"},{"price":"110.1959","percent_change_24h":"-2.74","contract":"0x000000000000000000000000000000000000003d"},{"price":"1","percent_change_24h":"0","contract":"0x0000000000000000000000000000000000000063"}]}')
+    res.end();
+    
+  });
+
+ // alt trans
+ app.get('/hdc/transactions' , (req , res)=>{
+   getTrans(req , res);  
+   /*let d= '{"total":2,"docs":[{"operations":[],"contract":null,"_id":"0x4dc81415a109aacb6efa304de669c7fffe3851d3450442b8ac5a6b6e4177f049","blockNumber":6848961,"timeStamp":"1544277218","nonce":10,"from":"0x1bb89c31f8706d5b387113070c5879c1790a51f8","to":"0x351dff60f035180fe75ab7c22994c07911f4fd76","value":"2000000000000000","gas":"21000","gasPrice":"4000000000","gasUsed":"21000","input":"0x","error":"","id":"0x4dc81415a109aacb6efa304de669c7fffe3851d3450442b8ac5a6b6e4177f049","coin":99},{"operations":[],"contract":null,"_id":"0x07489d25d0f6ffc0a79e6accf1109d396b118a299bc86dbc562df0bd96695010","blockNumber":6848894,"timeStamp":"1544276281","nonce":9,"from":"0x1bb89c31f8706d5b387113070c5879c1790a51f8","to":"0x351dff60f035180fe75ab7c22994c07911f4fd76","value":"2000000000000000","gas":"60000","gasPrice":"8140000000","gasUsed":"21000","input":"0x","error":"","id":"0x07489d25d0f6ffc0a79e6accf1109d396b118a299bc86dbc562df0bd96695010","coin":99}]}';
+   res.header('Content-Type','application/json; charset=utf-8');
+   res.header('Content-Length', d.length);
+   res.send(d);
+   res.end();*/
+ });
+ app.get('/ethereum/transactions' , (req , res)=>{
+    req.query = Object.assign({page:1,startBlock:1},req.query);
+    var trust = 'https://public.trustwalletapp.com';
+    trust += '/ethereum/transactions?address='+req.query.address+'&page='+req.query.page+'&startBlock='+req.query.startBlock;
+    https.get(trust , (r)=>{
+
+      let d = '';
+      r.on('data' , (chunk)=>{
+        d = d + String.fromCharCode.apply(null, chunk);
+      }).on('end' , ()=>{
+        res.header('Content-Type','application/json; charset=utf-8');
+        res.header('Content-Length', d.length);
+        res.send(d);
+        res.end();
+
+      });
+
+    }).on('error' , (e)=>{
+        res.sendStatus(500);
+    }).end();
+
+
+ });
+
 }
 
+var price = function(req,res) {
+  req.body = Object.assign({"currency":"CNY","tokens":[{"symbol":"ETH"}]},req.body);
+  req.body.tokens = [req.body.tokens[0]];
+  console.log(req.body);
+  var hdc = {
+    "status": true,
+    "response": [
+        {
+            "id": "hadescoin",
+            "name": "HadesCoin",
+            "price": "1.00",
+            "image": "",
+            "symbol": "HDC",
+            "contract": "0x0000000000000000000000000000000000000000",
+            //"percent_change_24h": "-8.55"
+        }
+    ],
+    "currency": "CNY"
+  }; 
+
+  if(req.body.tokens[0].symbol=='HDC') {
+    res.send(JSON.stringify(hdc));
+    res.end();
+  } else {
+    var symbol = req.body.tokens[0].symbol;
+    var trust= 'https://api.trustwalletapp.com/prices?currency='+req.body.currency+'&symbols='+symbol; 
+    https.get(trust , (r)=>{
+      r.on('data' , (d)=>{
+        d = JSON.parse(d);
+        d.currency = req.body.currency;
+        if(d.response.length>0)
+          d.response[0].contract = "0x0000000000000000000000000000000000000000";
+        d = JSON.stringify(d);
+        res.header('Content-Type','application/json; charset=utf-8');
+        res.header('Content-Length', d.length);
+        res.write(d);
+        res.end(); 
+      });
+
+    }).on('error' , (e)=>{
+        res.sendStatus(500);
+    }).end(); 
+  } 
+};
 var getAddr = function(req, res){
   // TODO: validate addr and tx
   var addr = req.body.addr.toLowerCase();
@@ -72,6 +168,39 @@ var getAddr = function(req, res){
     });
 
 };
+
+
+var getTrans = function(req, res){
+  req.query = Object.assign({limit:10 , page:1} , req.query);
+  req.query.page = parseInt(req.query.page) ? parseInt(req.query.page) : 1;
+  req.query.limit = parseInt(req.query.limit) ? parseInt(req.query.limit) : 10;
+
+  var addr = req.query.address.toLowerCase();
+  var limit = req.query.limit;
+  var start = (req.query.page-1) * limit;
+  
+  var data = {limit:limit , page:req.query.page};
+  var cond = { $or: [{"to": addr}, {"from": addr}] };
+  
+  Transaction.count(cond).then((total)=>{
+     data.total = total;
+     data.pages = Math.ceil(total/limit);
+     if(total > 0)  {
+        return Transaction.find(cond).lean(true).sort('-blockNumber').skip(start).limit(limit).exec("find");
+     } else {
+       return Promise.resolve([]);
+     }
+  }).then((docs)=>{
+     data.docs = filters.filterTrans(docs, addr); 
+     res.write(JSON.stringify(data));
+     res.end();
+  }).catch((e)=>{
+     res.sendStatus(500);
+  });
+
+};
+
+
 var getAddrCounter = function(req, res) {
   var addr = req.body.addr.toLowerCase();
   var count = parseInt(req.body.count);
@@ -122,9 +251,11 @@ var getBlock = function(req, res) {
     res.end();
   });
 };
+
+
 var getTx = function(req, res){
   var tx = req.body.tx.toLowerCase();
-  var txFind = Block.findOne( { "transactions.hash" : tx }, "transactions timestamp")
+  var txFind = Transaction.findOne( { "hash" : tx })
                   .lean(true);
   txFind.exec(function (err, doc) {
     if (!doc){
@@ -133,8 +264,8 @@ var getTx = function(req, res){
       res.end();
     } else {
       // filter transactions
-      var txDocs = filters.filterBlock(doc, "hash", tx)
-      res.write(JSON.stringify(txDocs));
+      //var txDocs = filters.filterBlock(doc, "hash", tx)
+      res.write(JSON.stringify(filters.filterTx(doc)));
       res.end();
     }
   });

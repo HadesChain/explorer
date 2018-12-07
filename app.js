@@ -25,8 +25,9 @@ var app = express();
 app.set('port', process.env.PORT || 3000);
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'darkview'));
+app.engine('html', require('ejs').renderFile);
+app.set('view engine', 'html');
 
 app.use(favicon(__dirname + '/public/favicon.ico'));
 app.use(logger('dev'));
@@ -41,19 +42,23 @@ global.__lib = __dirname + '/lib/';
 // client
 
 app.get('/', function(req, res) {
-  res.render('index', config);
+  res.render('index');
 });
 
-app.get('/config', function(req, res) {
-  res.json(config.settings);
+app.get('/addr/:addr', function(req, res) {
+  res.render('addr');
+});
+
+app.get('/tx/:tx', function(req, res) {
+  res.render('tx');
 });
 
 require('./routes')(app);
 
 // let angular catch them
-app.use(function(req, res) {
+/*app.use(function(req, res) {
   res.render('index', config);
-});
+});*/
 
 // error handlers
 
