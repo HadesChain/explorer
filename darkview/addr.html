@@ -89,7 +89,7 @@ h1.pull-left{
            <th>[手续费]</th> 
           </tr> 
           <tr v-for="t in trans">
-           <td><a class="address-tag" :href="'/tx/'+t.hash">{{t.hash}}</a></td>
+           <td><a class="address-tag" :href="'/tx/'+t.id">{{t.id}}</a></td>
            <td><span class="render" :datetime="t.timeStamp*1000" :title="new Date(t.timeStamp*1000).toLocaleString()">{{new Date(t.timeStamp*1000).toLocaleString()}}</span></td>
            <td>
             <span class="address-tag" v-if="t.from==addr">{{t.from}}</span>
