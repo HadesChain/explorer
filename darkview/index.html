@@ -34,7 +34,7 @@ margin-bottom: 1em;
       </div>
 
 
-      <form class="navbar-form navbar-right">
+      <form class="navbar-form navbar-right" v-on:submit="sear()">
         <div class="input-group">
           <input type="text" class="form-control" placeholder="请输入地址 / 交易哈希" v-model="kw">
           <span class="input-group-btn">
