@@ -93,16 +93,16 @@ h1.pull-left{
            <td><span class="render" :datetime="t.timeStamp*1000" :title="new Date(t.timeStamp*1000).toLocaleString()">{{new Date(t.timeStamp*1000).toLocaleString()}}</span></td>
            <td>
             <span class="address-tag" v-if="t.from==addr">{{t.from}}</span>
-            <a class="address-tag" :href="'/addr/'+t.from" v-else>{{t.from}}</a>
+            <a class="address-tag" :href="'/address/'+t.from" v-else>{{t.from}}</a>
            </td>
            <td>
             <span class="label label-warning rounded" v-if="t.from==addr">&nbsp; OUT &nbsp;</span>
             <span class="label label-success rounded" v-else>&nbsp; IN &nbsp;</span>
            </td>
            <td>
-            <a class="address-tag" :href="'/addr/'+t.to" v-if="t.isC && t.to!=addr"><img src="/img/application-table.png" alt="">合约创建</a>
+            <a class="address-tag" :href="'/address/'+t.to" v-if="t.isC && t.to!=addr"><img src="/img/application-table.png" alt="">合约创建</a>
             <span class="address-tag" v-else-if="t.isC && t.to==addr"><img src="/img/application-table.png" alt="">合约创建</span>
-            <a class="address-tag" :href="'/addr/'+t.to" v-else-if="t.to!=addr">{{t.to}}</a>
+            <a class="address-tag" :href="'/address/'+t.to" v-else-if="t.to!=addr">{{t.to}}</a>
             <span class="address-tag" v-else="t.to!=addr">{{t.to}}</span>
            </td>
            <td>{{(t.value/1e18).toFixed(4)}} HDC</td>
@@ -217,7 +217,7 @@ new Vue({
 
     sear : function() {
       if(this.kw.length === 42) {
-        window.location.href='/addr/'+this.kw;
+        window.location.href='/address/'+this.kw;
       } else if(this.kw.length === 66) {
         window.location.href='/tx/'+this.kw;
       } else {

@@ -45,7 +45,7 @@ app.get('/', function(req, res) {
   res.render('index');
 });
 
-app.get('/addr/:addr', function(req, res) {
+app.get('/address/:addr', function(req, res) {
   res.render('addr');
 });
 

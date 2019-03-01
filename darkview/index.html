@@ -55,8 +55,8 @@ margin-bottom: 1em;
             </div>
             <div class="item-body">
               <div class="todo-tasklist-controls pull-left col-xs-8"> 
-                <span>From <a :href="'/addr/'+t.from">{{t.from}}</a></span> <br>
-                <span>To <a :href="'/addr/'+t.to">{{t.to}}</a></span> 
+                <span>From <a :href="'/address/'+t.from">{{t.from}}</a></span> <br>
+                <span>To <a :href="'/address/'+t.to">{{t.to}}</a></span> 
               </div> 
               <div class="todo-tasklist-item-text pull-right col-xs-4">{{t.value}} HDC</div>
             </div>
@@ -96,7 +96,7 @@ new Vue({
 
     sear : function() {
       if(this.kw.length === 42) {
-        window.location.href='/addr/'+this.kw;
+        window.location.href='/address/'+this.kw;
       } else if(this.kw.length === 66) {
         window.location.href='/tx/'+this.kw;
       } else {
