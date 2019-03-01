@@ -71,6 +71,8 @@ background-color: #222;
       <div class="col-sm-12" style="background: #333;line-height: 2em;font-size: 18px;margin-bottom: .5em;">交易信息</h2></div>
       <div class="col-sm-3">哈希值</div>
       <div class="col-sm-9 bk">{{tx.hash}}</div>
+      <div v-if="!tx.status" class="col-sm-3">状态</div>
+      <div v-if="!tx.status" class="col-sm-9"><span class="glyphicon glyphicon-exclamation-sign" style="color:red">失败</span></div>
       <div class="col-sm-3">所在区块</div>
       <div class="col-sm-9">{{tx.blockNumber}}</div>
       <div class="col-sm-3">时间</div>

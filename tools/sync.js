@@ -186,6 +186,8 @@ var writeTransactionsToDB = function(config, blockData, flush) {
         tx.to = '0x'+web3.sha3(rlp.encode([tx.from,tx.nonce]).toString('hex'),{encoding:'hex'}).substr(26);
         tx.isC = true;
       }
+      tx.status = web3.eth.getTransactionReceipt(tx.hash).status=='0x1';
+      //console.log(tx.status);
     });
 
     // setup miners
