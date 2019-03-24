@@ -17,6 +17,7 @@ var mongoose        = require( 'mongoose' );
 var Block           = mongoose.model( 'Block' );
 var Transaction     = mongoose.model( 'Transaction' );
 var Account         = mongoose.model( 'Account' );
+var Event = mongoose.model( 'Event' );
 
 /**
   //Just listen for latest blocks and sync from the start of the app.
@@ -155,6 +156,12 @@ var writeTransactionsToDB = function(config, blockData, flush) {
   if (!self.miners) {
     self.miners = [];
   }
+
+  // save events
+  if (!self.events) {
+    self.events = [];
+  }
+
   if (blockData) {
     self.miners.push({ address: blockData.miner, blockNumber: blockData.number, type: 0 });
   }
@@ -186,7 +193,12 @@ var writeTransactionsToDB = function(config, blockData, flush) {
         tx.to = '0x'+web3.sha3(rlp.encode([tx.from,tx.nonce]).toString('hex'),{encoding:'hex'}).substr(26);
         tx.isC = true;
       }
-      tx.status = web3.eth.getTransactionReceipt(tx.hash).status=='0x1';
+
+      let txReception = web3.eth.getTransactionReceipt(tx.hash);
+      tx.status = txReception.status=='0x1';
+      for(let log of txReception.logs) {
+        self.events.push({address:log.address , topics:log.topics , data:log.data});
+      }
       //console.log(tx.status);
     });
 
@@ -302,6 +314,26 @@ var writeTransactionsToDB = function(config, blockData, flush) {
         console.log('* ' + tx.insertedCount + ' transactions successfully recorded.');
       }
     });
+    
+    if (self.events.length > 0) { 
+    var events = self.events;
+    self.events = [];
+    Event.collection.insert(events , function( err, ev){
+      if ( typeof err !== 'undefined' && err ) {
+        if (err.code == 11000) {
+          if(!('quiet' in config && config.quiet === true)) {
+            console.log('Skip: Duplicate transaction key ' + err);
+          }
+        }else{
+          console.log('Error: Aborted due to error on Transaction: ' + err);
+          process.exit(9);
+        }
+      }else{
+        console.log('* ' + ev.insertedCount + ' events successfully recorded.');
+      }
+    });
+   };
+
   }
 }
 /**

@@ -74,6 +74,13 @@ var BlockStat = new Schema(
     "uncleCount": Number
 });
 
+var Event = new Schema(
+{
+    "address": String,
+    "topics": [String],
+    "data": String
+},{collection:"Event"});
+
 // create indices
 Transaction.index({blockNumber:-1});
 Transaction.index({from:1, blockNumber:-1});
@@ -84,16 +91,21 @@ Account.index({type:-1, balance:-1});
 Block.index({miner:1});
 Block.index({miner:1, blockNumber:-1});
 
+Event.index({address:1,topics:1});
+
 mongoose.model('BlockStat', BlockStat);
 mongoose.model('Block', Block);
 mongoose.model('Account', Account);
 mongoose.model('Contract', Contract);
 mongoose.model('Transaction', Transaction);
+mongoose.model('Event', Event);
+
 module.exports.BlockStat = mongoose.model('BlockStat');
 module.exports.Block = mongoose.model('Block');
 module.exports.Contract = mongoose.model('Contract');
 module.exports.Transaction = mongoose.model('Transaction');
 module.exports.Account = mongoose.model('Account');
+module.exports.Event = mongoose.model('Event');
 
 mongoose.Promise = global.Promise;
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/blockDB', {
