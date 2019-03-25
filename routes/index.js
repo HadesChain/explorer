@@ -2,6 +2,7 @@ var mongoose = require( 'mongoose' );
 
 var Block     = mongoose.model( 'Block' );
 var Transaction = mongoose.model( 'Transaction' );
+var Event = mongoose.model( 'Event' );
 var filters = require('./filters');
 
 var async = require('async');
@@ -12,7 +13,7 @@ module.exports = function(app){
 
   // api for trust wallet
   app.get('/transactions', getTrans);
-  //app.post('/events', getEvents);
+  app.post('/events', getEvents);
   app.post('/tx', getTx);
   app.post('/block', getBlock);
 
@@ -66,7 +67,7 @@ module.exports = function(app){
 var price = function(req,res) {
   req.body = Object.assign({"currency":"CNY","tokens":[{"symbol":"ETH"}]},req.body);
   req.body.tokens = [req.body.tokens[0]];
-  console.log(req.body);
+
   var hdc = {
     "status": true,
     "response": [
@@ -130,6 +131,42 @@ var getTrans = function(req, res){
      }
   }).then((docs)=>{
      data.docs = filters.filterTrans(docs, addr); 
+     res.write(JSON.stringify(data));
+     res.end();
+  }).catch((e)=>{
+     res.sendStatus(500);
+  });
+
+};
+
+var getEvents = function(req, res){
+  var cond = {};
+  var data = {};
+
+  if (req.body.address && req.body.address.length==42) cond.address = req.body.address;
+  if (req.body['topics.0']) cond['topics.0'] = req.body['topics.0'];
+  if (req.body['topics.1']) cond['topics.1'] = req.body['topics.1'];
+
+  if (Object.keys(cond).length==0) {
+    res.sendStatus(404);
+    return;
+  }
+  
+  req.body = Object.assign({limit:10 , page:1} , req.body);
+  data.page = parseInt(req.body.page) ? parseInt(req.body.page) : 1;
+  data.limit = parseInt(req.body.limit) ? parseInt(req.body.limit) : 10;
+
+  var start = (data.page-1) * data.limit;
+  Event.count(cond).then((total)=>{
+     data.total = total;
+     data.pages = Math.ceil(total/data.limit);
+     if(total > 0)  {
+        return Event.find(cond).lean(true).sort('-_id').skip(start).limit(data.limit).exec("find");
+     } else {
+       return Promise.resolve([]);
+     }
+  }).then((docs)=>{
+     data.docs = docs;
      res.write(JSON.stringify(data));
      res.end();
   }).catch((e)=>{
