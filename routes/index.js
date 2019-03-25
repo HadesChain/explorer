@@ -10,37 +10,14 @@ var https = require('https');
 module.exports = function(app){
   var web3relay = require('./web3relay');
 
-  var DAO = require('./dao');
-  var Token = require('./token');
-
-  var compile = require('./compiler');
-  var fiat = require('./fiat');
-  var stats = require('./stats');
-  var richList = require('./richlist');
-
-  /* 
-    Local DB: data request format
-    { "address": "0x1234blah", "txin": true } 
-    { "tx": "0x1234blah" }
-    { "block": "1234" }
-  */
   // api for trust wallet
   app.get('/transactions', getTrans);
-
-  app.post('/richlist', richList);
-  app.post('/addr', getAddr);
-  app.post('/addr_count', getAddrCounter);
+  //app.post('/events', getEvents);
   app.post('/tx', getTx);
   app.post('/block', getBlock);
+
   app.post('/data', getData);
-
-  app.post('/daorelay', DAO);
-  app.post('/tokenrelay', Token);  
   app.post('/web3relay', web3relay.data);
-  app.post('/compile', compile);
-
-  app.post('/fiat', fiat);
-  app.post('/stats', stats);
 
   app.post('/tokenPrices',price);
 
@@ -59,11 +36,6 @@ module.exports = function(app){
  // alt trans
  app.get('/hdc/transactions' , (req , res)=>{
    getTrans(req , res);  
-   /*let d= '{"total":2,"docs":[{"operations":[],"contract":null,"_id":"0x4dc81415a109aacb6efa304de669c7fffe3851d3450442b8ac5a6b6e4177f049","blockNumber":6848961,"timeStamp":"1544277218","nonce":10,"from":"0x1bb89c31f8706d5b387113070c5879c1790a51f8","to":"0x351dff60f035180fe75ab7c22994c07911f4fd76","value":"2000000000000000","gas":"21000","gasPrice":"4000000000","gasUsed":"21000","input":"0x","error":"","id":"0x4dc81415a109aacb6efa304de669c7fffe3851d3450442b8ac5a6b6e4177f049","coin":99},{"operations":[],"contract":null,"_id":"0x07489d25d0f6ffc0a79e6accf1109d396b118a299bc86dbc562df0bd96695010","blockNumber":6848894,"timeStamp":"1544276281","nonce":9,"from":"0x1bb89c31f8706d5b387113070c5879c1790a51f8","to":"0x351dff60f035180fe75ab7c22994c07911f4fd76","value":"2000000000000000","gas":"60000","gasPrice":"8140000000","gasUsed":"21000","input":"0x","error":"","id":"0x07489d25d0f6ffc0a79e6accf1109d396b118a299bc86dbc562df0bd96695010","coin":99}]}';
-   res.header('Content-Type','application/json; charset=utf-8');
-   res.header('Content-Length', d.length);
-   res.send(d);
-   res.end();*/
  });
  app.get('/ethereum/transactions' , (req , res)=>{
     req.query = Object.assign({page:1,startBlock:1},req.query);
@@ -135,40 +107,6 @@ var price = function(req,res) {
     }).end(); 
   } 
 };
-var getAddr = function(req, res){
-  // TODO: validate addr and tx
-  var addr = req.body.addr.toLowerCase();
-  var count = parseInt(req.body.count);
-
-  var limit = parseInt(req.body.length);
-  var start = parseInt(req.body.start);
-
-  var data = { draw: parseInt(req.body.draw), recordsFiltered: count, recordsTotal: count, mined: 0 };
-
-  var addrFind = Transaction.find( { $or: [{"to": addr}, {"from": addr}] })  
-
-  var sortOrder = '-blockNumber';
-  if (req.body.order && req.body.order[0] && req.body.order[0].column) {
-    // date or blockNumber column
-    if (req.body.order[0].column == 1 || req.body.order[0].column == 6) {
-      if (req.body.order[0].dir == 'asc') {
-        sortOrder = 'blockNumber';
-      }
-    }
-  }
-
-  addrFind.lean(true).sort(sortOrder).skip(start).limit(limit)
-    .exec("find", function (err, docs) {
-      if (docs)
-        data.data = filters.filterTX(docs, addr);
-      else
-        data.data = [];
-      res.write(JSON.stringify(data));
-      res.end();
-    });
-
-};
-
 
 var getTrans = function(req, res){
   req.query = Object.assign({limit:10 , page:1} , req.query);
@@ -200,39 +138,6 @@ var getTrans = function(req, res){
 
 };
 
-
-var getAddrCounter = function(req, res) {
-  var addr = req.body.addr.toLowerCase();
-  var count = parseInt(req.body.count);
-  var data = { recordsFiltered: count, recordsTotal: count, mined: 0 };
-
-  async.waterfall([
-  function(callback) {
-
-  Transaction.count({ $or: [{"to": addr}, {"from": addr}] }, function(err, count) {
-    if (!err && count) {
-      // fix recordsTotal
-      data.recordsTotal = count;
-      data.recordsFiltered = count;
-    }
-    callback(null);
-  });
-
-  }, function(callback) {
-
-  Block.count({ "miner": addr }, function(err, count) {
-    if (!err && count) {
-      data.mined = count;
-    }
-    callback(null);
-  });
-
-  }], function (err) {
-    res.write(JSON.stringify(data));
-    res.end();
-  });
-
-};
 var getBlock = function(req, res) {
   // TODO: support queries for block hash
   var txQuery = "number";
