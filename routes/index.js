@@ -99,8 +99,12 @@ console.log(req.body);
     var trust= 'https://api.trustwallet.com/tickers?coin_id=60&currency=CNY'; 
     https.get(trust , (r)=>{
       r.on('data' , (d)=>{
+        try { 
+          d = JSON.parse(d);
+        } catch(e) {
+          d = {};
+        };
 
-        d = JSON.parse(d);
         d.response = d.docs;
         delete d.docs;
         d.response[0].contract = "0x0000000000000000000000000000000000000000";
