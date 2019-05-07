@@ -95,14 +95,15 @@ var price = function(req,res) {
     res.send(JSON.stringify(hdc));
     res.end();
   } else {
-    var symbol = req.body.tokens[0].symbol;
-    var trust= 'https://api.trustwalletapp.com/prices?currency='+req.body.currency+'&symbols='+symbol; 
+    //var symbol = req.body.tokens[0].symbol;
+    var trust= 'https://api.trustwallet.com/tickers?coin_id=60&currency=CNY'; 
     https.get(trust , (r)=>{
       r.on('data' , (d)=>{
         d = JSON.parse(d);
-        d.currency = req.body.currency;
-        if(d.response.length>0)
-          d.response[0].contract = "0x0000000000000000000000000000000000000000";
+      
+        d.response = d.docs;
+        delete d.docs;
+
         d = JSON.stringify(d);
         res.header('Content-Type','application/json; charset=utf-8');
         res.header('Content-Length', d.length);
