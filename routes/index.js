@@ -72,6 +72,7 @@ module.exports = function(app){
 }
 
 var price = function(req,res) {
+console.log(req.body);
   req.body = Object.assign({"currency":"CNY","tokens":[{"symbol":"ETH"}]},req.body);
   req.body.tokens = [req.body.tokens[0]];
 
@@ -90,7 +91,6 @@ var price = function(req,res) {
     ],
     "currency": "CNY"
   }; 
-
   if(req.body.tokens[0].symbol=='HDC') {
     res.send(JSON.stringify(hdc));
     res.end();
@@ -99,16 +99,14 @@ var price = function(req,res) {
     var trust= 'https://api.trustwallet.com/tickers?coin_id=60&currency=CNY'; 
     https.get(trust , (r)=>{
       r.on('data' , (d)=>{
+
         d = JSON.parse(d);
-      
         d.response = d.docs;
         delete d.docs;
+        d.response[0].contract = "0x0000000000000000000000000000000000000000";
+        res.send(JSON.stringify(d));
+        res.end();
 
-        d = JSON.stringify(d);
-        res.header('Content-Type','application/json; charset=utf-8');
-        res.header('Content-Length', d.length);
-        res.write(d);
-        res.end(); 
       });
 
     }).on('error' , (e)=>{
