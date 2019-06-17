@@ -8,8 +8,8 @@ var filters = require('./filters');
 var async = require('async');
 var https = require('https');
 
-module.exports = function(app){
   var web3relay = require('./web3relay');
+module.exports = function(app){
 
   // api for trust wallet
   app.get('/transactions', getTrans);
@@ -65,10 +65,6 @@ module.exports = function(app){
 }
 
 var price = function(req,res) {
-console.log(req.body);
-  req.body = Object.assign({"currency":"CNY","tokens":[{"symbol":"ETH"}]},req.body);
-  req.body.tokens = [req.body.tokens[0]];
-
   var hdc = {
     "status": true,
     "response": [
@@ -84,9 +80,16 @@ console.log(req.body);
     ],
     "currency": "CNY"
   }; 
+
+  req.body = Object.assign({"currency":"CNY","tokens":[{"symbol":"HDC"}]},req.body);
+  req.body.tokens = [req.body.tokens[0]];
+
   if(req.body.tokens[0].symbol=='HDC') {
-    res.send(JSON.stringify(hdc));
-    res.end();
+    web3relay.eth.getBalance('0x728a6404d15120c923529e9cdfa36d2f969d1cc1',(err,rs)=>{
+      hdc.response[0].price = (1+ (6000000-parseInt(rs.div(1e18).toNumber()))*(1e-6)).toFixed(3);
+      res.send(JSON.stringify(hdc));
+      res.end();
+    });
   } else {
     //var symbol = req.body.tokens[0].symbol;
     var trust= 'https://api.trustwallet.com/tickers?coin_id=60&currency=CNY'; 
