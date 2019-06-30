@@ -86,7 +86,7 @@ var price = function(req,res) {
 
   if(req.body.tokens[0].symbol=='HDC') {
     web3relay.eth.getBalance('0x728a6404d15120c923529e9cdfa36d2f969d1cc1',(err,rs)=>{
-      hdc.response[0].price = (1+ (6000000-parseInt(rs.div(1e18).toNumber()))*(1e-6)).toFixed(3);
+      hdc.response[0].price = (1+ (20000000-parseInt(rs.div(1e18).toNumber()))*(1e-6)).toFixed(3);
       res.send(JSON.stringify(hdc));
       res.end();
     });
